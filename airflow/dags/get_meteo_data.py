@@ -21,6 +21,7 @@ API_KEY = Variable.get("api_key_openWeatherMap")
 ACCESS_KEY = Variable.get("access_key")
 SECRET_KEY = Variable.get("secret_key")
 HOST_MINIO = Variable.get("HOST_minio")
+print(HOST_MINIO)
 BUCKET_NAME = Variable.get("bucket_name_minio")
 
 LONG_DESCRIPTION = """
@@ -48,7 +49,7 @@ client_minio = Minio(
 
 
 args = {'owner': OWNER, 
-        'start_date': pendulum.datetime(2025, 6, 20, tz="Europe/Moscow"),
+        'start_date': pendulum.datetime(2025, 6, 18, tz="Europe/Moscow"),
         "catchup": False,
         "retries": 1,
         "retry_delay": pendulum.duration(hours=1),}
@@ -60,7 +61,9 @@ def get_data_openweathermap(**context):
     for city in context['city_name']:
         URL = f'https://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&units=metric'
         responce = requests.get(url=URL)  # запрос к openWeatherMap
+        print(responce.status_code)
         data = responce.json()  # ответ в json
+        
         df = pd.DataFrame([{**data['main'], **data['wind']}])
         df['clouds'] = data['clouds']['all']
         df['gust'] = pd.NA if 'gust' not in data['wind'] else df['gust']
@@ -68,7 +71,7 @@ def get_data_openweathermap(**context):
         df['snow'] = pd.NA if 'snow' not in data else data['snow']['1h']
         df.insert(0, 'date', context["date_time"])  # добавляем дату и время запроса
         try:
-            responce_minio = client_minio.get_object(bucket_name = "prod", object_name = f"{city}/{city}_{context['date']}_temp.parquet") # получаем файл из minio если существует
+            responce_minio = client_minio.get_object(bucket_name = BUCKET_NAME, object_name = f"{city}/{city}_{context['date']}_temp.parquet") # получаем файл из minio если существует
             parquet_buffer = BytesIO(responce_minio.read()) # читаем и создаем буфер - файлоподобный объект
             responce_minio.close()  # закрываем соеденение
             responce_minio.release_conn() # Освобождает соединение в пуле

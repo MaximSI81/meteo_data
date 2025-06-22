@@ -1,3 +1,4 @@
+
 from airflow import DAG
 import sys
 sys.path.append('/opt/airflow/dags/plugins')
@@ -6,7 +7,6 @@ import duckdb as dk
 from airflow.models import Variable
 from minio import Minio
 import pendulum
-from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.operators.python import PythonOperator
 from airflow.hooks.base import BaseHook
 
@@ -47,6 +47,8 @@ args = {'owner': OWNER,
         "retry_delay": pendulum.duration(hours=1),}
 
 def insert_stg_table(**context):
+    #  "Moscow", "Minsk", "Saint Petersburg", "Kazan"
+    prev_ds = context["prev_ds"]
     pg_conn = dk.connect()
     pg_conn.sql(f"""
     
@@ -59,13 +61,37 @@ def insert_stg_table(**context):
         SET s3_secret_access_key = '{SECRET_KEY}';
         SET s3_use_ssl = FALSE;
         
-        INSERT INTO pg_db.stg_meteo.Moscow_{context["ds_nodash"]}_temp
-        FROM 's3://{BUCKET_NAME}/Moscow_{context["prev_ds"]}_temp.parquet'
+        CREATE TABLE IF NOT EXISTS pg_db.stg_meteo.Moscow_temp AS
+        FROM 's3://prod/Moscow/Moscow_{prev_ds}_temp.parquet' LIMIT 0;
+        
+        CREATE TABLE IF NOT EXISTS pg_db.stg_meteo.Minsk_temp AS
+        FROM 's3://prod/Minsk/Minsk_{prev_ds}_temp.parquet' LIMIT 0;
+        
+        CREATE TABLE IF NOT EXISTS pg_db.stg_meteo.SaintPetersburg_temp AS
+        FROM 's3://prod/Saint*/Saint*_{prev_ds}_temp.parquet' LIMIT 0;
+        
+        CREATE TABLE IF NOT EXISTS pg_db.stg_meteo.Kazan_temp AS
+        FROM 's3://prod/Kazan/Kazan_{prev_ds}_temp.parquet' LIMIT 0;
+        
+        INSERT INTO pg_db.stg_meteo.Moscow_temp
+        SELECT * FROM 's3://prod/Moscow/Moscow_{prev_ds}_temp.parquet';
+        
+        INSERT INTO pg_db.stg_meteo.Minsk_temp
+        SELECT * FROM 's3://prod/Minsk/Minsk_{prev_ds}_temp.parquet';
+        
+        INSERT INTO pg_db.stg_meteo.SaintPetersburg_temp
+        SELECT * FROM 's3://prod/Saint*/Saint*_{prev_ds}_temp.parquet';
+        
+        INSERT INTO pg_db.stg_meteo.Kazan_temp
+        SELECT * FROM 's3://prod/Kazan/Kazan_{prev_ds}_temp.parquet';
+        
         """
     )
     
     
-
+    
+    
+    
 
 with DAG(dag_id=DAG_ID,
          default_args=args,
@@ -84,25 +110,7 @@ with DAG(dag_id=DAG_ID,
         host=HOST_MINIO,
         access_key=ACCESS_KEY,
         secret_key=SECRET_KEY,
-        object = f"Moscow_{args['start_date'].subtract(days=1).strftime('%Y-%m-%d')}_temp.parquet"
-        )
-
-
-    create_stg_table = SQLExecuteQueryOperator(
-        task_id="create_stg_table",
-        conn_id="postgres_db",
-        autocommit=True,
-        sql="""
-            CREATE TABLE IF NOT EXISTS stg_meteo.Moscow_{{ prev_ds_nodash }}_temp (date TIMESTAMP,
-                                                                              temp FLOAT,
-                                                                              feels_like FLOAT,
-                                                                              temp_min FLOAT,
-                                                                              temp_max FLOAT,
-                                                                              pressure INT8,
-                                                                              deg INT8,
-                                                                              speed FLOAT,
-                                                                              gust FLOAT);
-            """,
+        objects = [f"{city}/{city}_{args['start_date'].subtract(days=1).strftime('%Y-%m-%d')}_temp.parquet" for city in ("Moscow", "Minsk", "Saint Petersburg", "Kazan")]
         )
 
 
@@ -110,4 +118,4 @@ with DAG(dag_id=DAG_ID,
                                python_callable=insert_stg_table, 
                                )
 
-    minio_sensor>>create_stg_table>>stg_table
+    minio_sensor>>stg_table

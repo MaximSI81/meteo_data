@@ -5,16 +5,16 @@ from minio import Minio
 class CustomSensorS3_minio(BaseSensorOperator):
   
     
-    def __init__(self, host, bucket, object, access_key, secret_key,  *args, **kwargs): 
+    def __init__(self, host, bucket, objects, access_key, secret_key,  *args, **kwargs): 
         self.bucket = bucket
-        self.object = object
+        self.objects = objects
         self.access_key = access_key
         self.secret_key = secret_key
         self.host = host
         super().__init__(*args, **kwargs)
     
     def poke(self, *args, **kwargs):
-        print(self.object)
+        print(self.objects)
         minio = Minio(
             self.host,  # URL MinIO-сервера
             access_key=self.access_key,  # Логин MinIO
@@ -23,7 +23,8 @@ class CustomSensorS3_minio(BaseSensorOperator):
             region = "us-east-1"
         )
         try:
-            minio.stat_object(bucket_name=self.bucket, object_name=self.object)
+            for object in self.objects:
+                minio.stat_object(bucket_name=self.bucket, object_name=object)
             return True
         except:
             return False

@@ -1,5 +1,3 @@
-## Pet project
-
 ## Архитектура проекта
 ```mermaid
 graph LR

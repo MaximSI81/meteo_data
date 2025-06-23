@@ -16,6 +16,13 @@ style D fill:#e74c3c,stroke:#333
 style E fill:#9b59b6,stroke:#333
 style F fill:#3498db,stroke:#333
 ```
+## ## ⚙️ Установка
+
+1. Клонируйте репозиторий:
+   ```bash
+   git clone https://github.com/MaximSI81/meteo_data.git
+   cd meteo_data   
+
+
 ## 📝  Пример итогового дашборда
 ![Preview PDF](https://github.com/MaximSI81/meteo_data/blob/master/meteodata.pdf)
-

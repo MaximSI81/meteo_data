@@ -1,5 +1,3 @@
-## Pet project
-
 ## Архитектура проекта
 ```mermaid
 graph LR
@@ -17,5 +15,7 @@ style C fill:#1abc9c,stroke:#333
 style D fill:#e74c3c,stroke:#333
 style E fill:#9b59b6,stroke:#333
 style F fill:#3498db,stroke:#333
+```
+## 📝  Пример итогового дашборда
+!
 
-## Итоговый дашборт

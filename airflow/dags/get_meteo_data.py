@@ -49,7 +49,7 @@ client_minio = Minio(
 
 
 args = {'owner': OWNER, 
-        'start_date': pendulum.datetime(2025, 6, 18, tz="Europe/Moscow"),
+        'start_date': pendulum.datetime(2025, 6, 21, tz="Europe/Moscow"),
         "catchup": False,
         "retries": 1,
         "retry_delay": pendulum.duration(hours=1),}

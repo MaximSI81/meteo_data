@@ -28,8 +28,8 @@ PORT = pg_conn.port
 
 # Конфигурация DAG
 OWNER = "m.safo"
-DAG_ID = "create_dashboard"
-SHORT_DESCRIPTION = "Создание дашборда"
+DAG_ID = "add_data_to_stg_pg"
+SHORT_DESCRIPTION = "Создание stg слоя в postgres"
 
 client_minio = Minio(
     HOST_MINIO,  # URL MinIO-сервера
@@ -41,12 +41,12 @@ client_minio = Minio(
 
 
 args = {'owner': OWNER, 
-        'start_date': pendulum.datetime(2025, 6, 19, tz="Europe/Moscow"),
+        'start_date': pendulum.datetime(2025, 6, 22, tz="Europe/Moscow"),
         "catchup": False,
         "retries": 1,
         "retry_delay": pendulum.duration(hours=1),}
 
-def insert_stg_table(**context):
+def create_insert_stg_table(**context):
     #  "Moscow", "Minsk", "Saint Petersburg", "Kazan"
     prev_ds = context["prev_ds"]
     pg_conn = dk.connect()
@@ -115,7 +115,7 @@ with DAG(dag_id=DAG_ID,
 
 
     stg_table = PythonOperator(task_id="stg_table", 
-                               python_callable=insert_stg_table, 
+                               python_callable=create_insert_stg_table, 
                                )
 
     minio_sensor>>stg_table

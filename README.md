@@ -16,4 +16,3 @@ style D fill:#e74c3c,stroke:#333
 style E fill:#9b59b6,stroke:#333
 style F fill:#3498db,stroke:#333
 
-## Итоговый дашборт

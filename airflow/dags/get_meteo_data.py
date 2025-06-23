@@ -21,7 +21,6 @@ API_KEY = Variable.get("api_key_openWeatherMap")
 ACCESS_KEY = Variable.get("access_key")
 SECRET_KEY = Variable.get("secret_key")
 HOST_MINIO = Variable.get("HOST_minio")
-print(HOST_MINIO)
 BUCKET_NAME = Variable.get("bucket_name_minio")
 
 LONG_DESCRIPTION = """
@@ -49,7 +48,7 @@ client_minio = Minio(
 
 
 args = {'owner': OWNER, 
-        'start_date': pendulum.datetime(2025, 6, 21, tz="Europe/Moscow"),
+        'start_date': pendulum.datetime(2025, 6, 22, tz="Europe/Moscow"),
         "catchup": False,
         "retries": 1,
         "retry_delay": pendulum.duration(hours=1),}

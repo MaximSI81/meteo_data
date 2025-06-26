@@ -1,7 +1,7 @@
 from airflow import DAG
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 import pendulum
-
+from airflow.sensors.external_task import ExternalTaskSensor
 
 
 # Конфигурация DAG
@@ -16,7 +16,7 @@ PG_CONN = "postgres_db"
 
 
 args = {'owner': OWNER, 
-        'start_date': pendulum.datetime(2025, 6, 22, tz="Europe/Moscow"),
+        'start_date': pendulum.datetime(2025, 6, 24, tz="UTC"),
         "catchup": False,
         "retries": 1,
         "retry_delay": pendulum.duration(hours=1),}
@@ -29,8 +29,17 @@ with DAG(dag_id=DAG_ID,
          max_active_tasks=1,
          concurrency=1,
          description=SHORT_DESCRIPTION) as dag:
+   
+   sensor_on_stg = ExternalTaskSensor(
+        task_id="sensor_on_stg",
+        external_dag_id="add_data_to_stg_pg",
+        allowed_states=["success"],
+        mode="reschedule",
+        timeout=3600,  # длительность работы сенсора
+        poke_interval=60,  # частота проверки
+    )
     
-    create_dm = SQLExecuteQueryOperator(
+   create_dm = SQLExecuteQueryOperator(
         task_id = "create_data_marts",
         conn_id=PG_CONN,
         sql="""DROP TABLE IF EXISTS dm.temp;
@@ -73,4 +82,4 @@ with DAG(dag_id=DAG_ID,
                 WHERE date::date = '{{ prev_ds }}';"""
     )
     
-    
+   sensor_on_stg>>create_dm
